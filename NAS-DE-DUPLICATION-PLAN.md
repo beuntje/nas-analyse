@@ -44,9 +44,26 @@ python3 nas_audit.py --root /mnt/nas/small-test-folder \
 ```
 
 The output directory must be outside the scanned NAS tree and must not already
-contain this audit's output files. Start with a representative subset if the
-NAS is exceptionally large, and allow for a potentially long read-only scan.
-The server account needs read/list access to the paths being audited.
+contain this audit's output files (a new run into a used directory is refused).
+Start with a representative subset if the NAS is exceptionally large, and
+allow for a potentially long read-only scan. The server account needs
+read/list access to the paths being audited.
+
+### Progress, interruption, and resuming
+
+- Progress is printed to stderr with timestamps every 5 seconds (change with
+  `--progress-interval SECONDS`; `0` disables it): files/folders/bytes during
+  the inventory, then files and bytes hashed out of the total.
+- The run can be stopped at any time with Ctrl-C (or SIGTERM). Progress is
+  kept in `audit-index.sqlite` in the output directory.
+- Continue with the same command plus `--resume`. Finished folders and
+  already-hashed files are skipped. `--resume` refuses a different `--root`
+  and does nothing if the audit already completed.
+- Report files are written as `*.partial` and renamed only when complete, so
+  an interrupted run never leaves a half-written report.
+- Keep `audit-index.sqlite` (plus any `-wal`/`-shm` files if copying while a
+  run is active); it is not deleted after completion and can be queried later
+  for further analysis. It is a snapshot of the NAS at scan time.
 
 ## Audit steps
 
